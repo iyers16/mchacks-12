@@ -2,50 +2,44 @@ import axios from "axios";
 
 export const fetchOptions = async () => {
   const response = await axios.get("http://127.0.0.1:5000/api/options");
-  return response.data; // { periods: [...], stocks: [...] }
+  return response.data;
 };
 
 export const fetchStockData = async (period, stock) => {
   const response = await axios.get(
     `http://127.0.0.1:5000/api/period/${period}/stock/${stock}`
   );
-  const data = response.data;
+  const { tradeData, marketData } = response.data;
+  console.log(tradeData);
+  console.log(marketData);
 
-  const timestamps = data.map((item) => new Date(item.timestamp).getTime()); // Convert to Unix timestamp
-  const tradePrices = data.map((item) => item.price);
-  const bidPrices = data.map((item) => item.bidPrice);
-  const askPrices = data.map((item) => item.askPrice);
-
-  // Compute Trade-Bid and Trade-Ask differences
-  const tradeBidDiff = tradePrices.map((trade, index) => trade - bidPrices[index]);
-  const tradeAskDiff = tradePrices.map((trade, index) => trade - askPrices[index]);
-
-  const chartData = {
-    series: [
-      { name: "Trade", data: timestamps.map((t, i) => [t, tradePrices[i]]) },
-      { name: "Bid", data: timestamps.map((t, i) => [t, bidPrices[i]]) },
-      { name: "Ask", data: timestamps.map((t, i) => [t, askPrices[i]]) },
-    ],
-    options: {
-      chart: { type: "line", height: 350 },
-      xaxis: { type: "datetime" },
-      colors: ["#808080", "#0000FF", "#FF0000"], // Grey, Blue, Red
-      stroke: { width: 2 },
-    },
+  const tradeSeries = {
+    name: "Trade",
+    data: tradeData.map((item) => [
+      new Date(item.timestamp).getTime(),
+      item.price,
+    ]),
   };
 
-  const differenceData = {
-    series: [
-      { name: "Trade-Bid", data: timestamps.map((t, i) => [t, tradeBidDiff[i]]) },
-      { name: "Trade-Ask", data: timestamps.map((t, i) => [t, tradeAskDiff[i]]) },
-    ],
-    options: {
-      chart: { type: "line", height: 350 },
-      xaxis: { type: "datetime" },
-      colors: ["#FFA500", "#800080"], // Orange, Purple
-      stroke: { width: 2 },
-    },
+  const bidSeries = {
+    name: "Bid",
+    data: marketData.map((item) => [
+      new Date(item.timestamp).getTime(),
+      item.bidPrice,
+    ]),
   };
 
-  return { chartData, differenceData };
+  const askSeries = {
+    name: "Ask",
+    data: marketData.map((item) => [
+      new Date(item.timestamp).getTime(),
+      item.askPrice,
+    ]),
+  };
+
+  return {
+    chartData: {
+      series: [tradeSeries, bidSeries, askSeries],
+    },
+  };
 };

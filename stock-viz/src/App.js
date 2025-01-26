@@ -4,12 +4,12 @@ import Dropdown from "./components/Dropdown";
 import { fetchOptions, fetchStockData } from "./utils/api";
 
 const App = () => {
-  const [chartData, setChartData] = useState([]);
-  const [differenceData, setDifferenceData] = useState([]);
+  const [tradeData, setTradeData] = useState([]);
+  const [marketData, setMarketData] = useState([]);
   const [periods, setPeriods] = useState([]);
   const [stocks, setStocks] = useState([]);
-  const [period, setPeriod] = useState("");
-  const [stock, setStock] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState("");
+  const [selectedStock, setSelectedStock] = useState("");
 
   useEffect(() => {
     const getOptions = async () => {
@@ -26,18 +26,21 @@ const App = () => {
 
   useEffect(() => {
     const getStockData = async () => {
-      if (period && stock) {
+      if (selectedPeriod && selectedStock) {
         try {
-          const { chartData, differenceData } = await fetchStockData(period, stock);
-          setChartData(chartData);
-          setDifferenceData(differenceData);
+          const { chartData } = await fetchStockData(
+            selectedPeriod,
+            selectedStock
+          );
+          setTradeData(chartData.series.find((s) => s.name === "Trade"));
+          setMarketData(chartData.series.filter((s) => s.name !== "Trade"));
         } catch (error) {
           console.error("Error fetching stock data:", error);
         }
       }
     };
     getStockData();
-  }, [period, stock]);
+  }, [selectedPeriod, selectedStock]);
 
   return (
     <div style={{ padding: "20px" }}>
@@ -46,26 +49,39 @@ const App = () => {
         <Dropdown
           label="Select Period:"
           options={periods}
-          value={period}
-          onChange={setPeriod}
+          value={selectedPeriod}
+          onChange={setSelectedPeriod}
         />
         <Dropdown
           label="Select Stock:"
           options={stocks}
-          value={stock}
-          onChange={setStock}
+          value={selectedStock}
+          onChange={setSelectedStock}
         />
       </div>
-      {chartData.series && (
+      {tradeData && tradeData.data && (
         <ChartWrapper
-          title={`Stock Data for ${stock} in ${period}`}
-          chartData={chartData}
+          title={`Trade Data for ${selectedStock} in ${selectedPeriod}`}
+          chartData={{
+            series: [tradeData],
+            options: {
+              chart: { type: "line", height: 350 },
+              xaxis: { type: "datetime" },
+            },
+          }}
         />
       )}
-      {differenceData.series && (
+      {marketData && marketData.length > 0 && (
         <ChartWrapper
-          title={`Price Differences for ${stock} in ${period}`}
-          chartData={differenceData}
+          title={`Market Data for ${selectedStock} in ${selectedPeriod}`}
+          chartData={{
+            series: marketData,
+            options: {
+              chart: { type: "line", height: 350 },
+              xaxis: { type: "datetime" },
+              colors: ["#0000FF", "#FF0000"], // Blue (Bid), Red (Ask)
+            },
+          }}
         />
       )}
     </div>
