@@ -32,6 +32,7 @@ def load_market_data(market_files):
         if i == 0:
             # Read the first file with headers
             df = pd.read_csv(market_file)
+            print(df)
         else:
             # Read subsequent files without headers and assign column names manually
             df = pd.read_csv(market_file, header=None, names=["bidVolume", "bidPrice", "askVolume", "askPrice", "timestamp"])
