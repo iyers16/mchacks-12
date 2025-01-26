@@ -23,6 +23,8 @@ def get_options():
 def get_stock_data(period, stock):
     try:
         # Directory paths
+        if period not in ["Period1", "Period2", "Period3"]:
+            period += "/" + period
         period_dir = os.path.join(BASE_DIR, period, stock)
         trade_file = os.path.join(period_dir, f"trade_data__{stock}.csv")
         market_files = [os.path.join(period_dir, file) for file in os.listdir(period_dir) if file.startswith("market_data")]
