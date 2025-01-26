@@ -7,7 +7,7 @@ app = Flask(__name__)
 CORS(app)  # Enable CORS for the frontend to fetch data
 
 # Define the base data directory
-BASE_DIR = "/home/iyers16/Documents/dataset/TrainingData"
+BASE_DIR = "/home/iyers16/Documents/mchacks-12/backend/TrainingData"
 
 @app.route('/api/options', methods=['GET'])
 def get_options():
