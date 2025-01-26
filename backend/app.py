@@ -6,6 +6,9 @@ from utils import get_options_data, process_stock_data
 app = Flask(__name__)
 CORS(app)  # Enable CORS for the frontend to fetch data
 
+# Define the base data directory
+BASE_DIR = os.getenv("BASE_DIR")
+
 @app.route('/api/options', methods=['GET'])
 def get_options():
     try:
