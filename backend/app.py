@@ -29,7 +29,9 @@ def get_stock_data(period, stock):
 
         # Load trade data
         trade_data = pd.read_csv(trade_file)
-        trade_data['timestamp'] = pd.to_datetime(trade_data['timestamp'])
+        trade_data['timestamp'] = pd.to_datetime(
+            trade_data['timestamp'], format='%H:%M:%S.%f', errors='coerce'
+        )
 
         # Load and concatenate market data
         market_data_list = []
@@ -44,7 +46,13 @@ def get_stock_data(period, stock):
 
         # Concatenate all DataFrames into one
         market_data = pd.concat(market_data_list, ignore_index=True)
-        market_data['timestamp'] = pd.to_datetime(market_data['timestamp'])
+        market_data['timestamp'] = pd.to_datetime(
+            market_data['timestamp'], format='%H:%M:%S.%f', errors='coerce'
+        )
+
+        # Drop rows with invalid timestamps
+        trade_data.dropna(subset=['timestamp'], inplace=True)
+        market_data.dropna(subset=['timestamp'], inplace=True)
 
         # Merge the trade and market data
         merged_data = pd.merge_asof(
@@ -59,7 +67,9 @@ def get_stock_data(period, stock):
         return jsonify(response)
 
     except Exception as e:
+        print(e)
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)

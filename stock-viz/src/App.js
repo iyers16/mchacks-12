@@ -4,6 +4,7 @@ import axios from "axios";
 
 const App = () => {
   const [chartData, setChartData] = useState([]);
+  const [differenceData, setDifferenceData] = useState([]);
   const [periods, setPeriods] = useState([]);
   const [stocks, setStocks] = useState([]);
   const [period, setPeriod] = useState("");
@@ -32,18 +33,22 @@ const App = () => {
             `http://127.0.0.1:5000/api/period/${period}/stock/${stock}`
           );
           const data = response.data;
-
+  
           // Prepare data for ApexCharts
-          const timestamps = data.map((item) => item.timestamp);
+          const timestamps = data.map((item) => new Date(item.timestamp).getTime()); // Convert to Unix timestamp
           const tradePrices = data.map((item) => item.price);
           const bidPrices = data.map((item) => item.bidPrice);
           const askPrices = data.map((item) => item.askPrice);
-
+  
+          // Compute Trade-Bid and Trade-Ask differences
+          const tradeBidDiff = tradePrices.map((trade, index) => trade - bidPrices[index]);
+          const tradeAskDiff = tradePrices.map((trade, index) => trade - askPrices[index]);
+  
           setChartData({
             series: [
-              { name: "Trade", data: tradePrices },
-              { name: "Bid", data: bidPrices },
-              { name: "Ask", data: askPrices },
+              { name: "Trade", data: timestamps.map((t, i) => [t, tradePrices[i]]) },
+              { name: "Bid", data: timestamps.map((t, i) => [t, bidPrices[i]]) },
+              { name: "Ask", data: timestamps.map((t, i) => [t, askPrices[i]]) },
             ],
             options: {
               chart: {
@@ -51,8 +56,7 @@ const App = () => {
                 height: 350,
               },
               xaxis: {
-                categories: timestamps,
-                type: "datetime",
+                type: "datetime", // Ensure proper handling of timestamps
               },
               colors: ["#808080", "#0000FF", "#FF0000"], // Grey, Blue, Red
               stroke: {
@@ -64,6 +68,30 @@ const App = () => {
               },
             },
           });
+  
+          setDifferenceData({
+            series: [
+              { name: "Trade-Bid", data: timestamps.map((t, i) => [t, tradeBidDiff[i]]) },
+              { name: "Trade-Ask", data: timestamps.map((t, i) => [t, tradeAskDiff[i]]) },
+            ],
+            options: {
+              chart: {
+                type: "line",
+                height: 350,
+              },
+              xaxis: {
+                type: "datetime", // Ensure proper handling of timestamps
+              },
+              colors: ["#FFA500", "#800080"], // Orange, Purple
+              stroke: {
+                width: 2,
+              },
+              title: {
+                text: `Price Differences for ${stock} in ${period}`,
+                align: "center",
+              },
+            },
+          });
         } catch (error) {
           console.error("Error fetching data:", error);
         }
@@ -71,6 +99,7 @@ const App = () => {
       fetchData();
     }
   }, [period, stock]);
+  
 
   return (
     <div style={{ padding: "20px" }}>
@@ -115,6 +144,14 @@ const App = () => {
         <Chart
           options={chartData.options}
           series={chartData.series}
+          type="line"
+          height={350}
+        />
+      )}
+      {differenceData.series && (
+        <Chart
+          options={differenceData.options}
+          series={differenceData.series}
           type="line"
           height={350}
         />
